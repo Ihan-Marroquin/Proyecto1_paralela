@@ -1,0 +1,21 @@
+# Archivos generados por CMake y scripts de compilacion
+build/
+cmake-build-*/
+
+# Binarios y archivos intermedios
+*.exe
+*.o
+*.obj
+*.dll
+*.a
+
+# Resultados temporales de pruebas
+results/*.csv
+results/*.ppm
+tmp/
+
+# Configuracion local de editores
+.vscode/
+.idea/
+*.user
+
