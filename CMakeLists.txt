@@ -13,6 +13,7 @@ add_executable(aurora_saver
     src/AppConfig.cpp
     src/AuroraSimulation.cpp
     src/AuroraRenderer.cpp
+    src/ScreensaverWindow.cpp
 )
 
 target_include_directories(aurora_saver PRIVATE include)

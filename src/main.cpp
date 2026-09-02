@@ -1,6 +1,7 @@
 #include "AppConfig.h"
 #include "AuroraRenderer.h"
 #include "AuroraSimulation.h"
+#include "ScreensaverWindow.h"
 
 #include <chrono>
 #include <iostream>
@@ -69,13 +70,9 @@ int main(int argc, char* argv[]) {
         std::cerr << "Esta funcion se agregara junto con los renderizadores paralelos.\n";
         return 1;
     }
-    if (!config.headless) {
-        std::cerr << "La ventana interactiva aun no esta disponible; use --headless.\n";
-        return 1;
-    }
     if (config.mode != RenderMode::Sequential) {
         std::cerr << "Por ahora use --mode sequential.\n";
         return 1;
     }
-    return runHeadless(config);
+    return config.headless ? runHeadless(config) : runScreensaverWindow(config);
 }
