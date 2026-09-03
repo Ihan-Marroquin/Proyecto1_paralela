@@ -160,7 +160,7 @@ int runScreensaverWindow(const AppConfig& config) {
         simulation.update(deltaSeconds);
 
         const auto renderStart = std::chrono::steady_clock::now();
-        renderer.renderSequential(simulation);
+        renderer.render(simulation, config.mode);
         const auto renderEnd = std::chrono::steady_clock::now();
         lastRenderMilliseconds =
             std::chrono::duration<double, std::milli>(renderEnd - renderStart).count();
@@ -188,7 +188,8 @@ int runScreensaverWindow(const AppConfig& config) {
             const double framesPerSecond = static_cast<double>(framesSinceTitleUpdate) / titleSeconds;
             std::ostringstream title;
             title.precision(1);
-            title << std::fixed << "Aurora Paralela | sequential | FPS " << framesPerSecond
+            title << std::fixed << "Aurora Paralela | " << renderModeName(config.mode)
+                  << " | FPS " << framesPerSecond
                   << " | render " << lastRenderMilliseconds << " ms | N=" << config.sourceCount;
             SetWindowText(window, title.str().c_str());
             framesSinceTitleUpdate = 0;

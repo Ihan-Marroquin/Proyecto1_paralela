@@ -20,13 +20,13 @@ int runHeadless(const AppConfig& config) {
     const auto start = std::chrono::steady_clock::now();
     for (int frame = 0; frame < frameCount; ++frame) {
         simulation.update(deltaSeconds);
-        renderer.renderSequential(simulation);
+        renderer.render(simulation, config.mode);
     }
     const auto end = std::chrono::steady_clock::now();
     const double elapsedMilliseconds =
         std::chrono::duration<double, std::milli>(end - start).count();
 
-    std::cout << "Modo: sequential\n"
+    std::cout << "Modo: " << renderModeName(config.mode) << '\n'
               << "Canvas: " << config.width << 'x' << config.height << '\n'
               << "Fuentes: " << config.sourceCount << '\n'
               << "Cuadros: " << frameCount << '\n'
@@ -70,8 +70,8 @@ int main(int argc, char* argv[]) {
         std::cerr << "Esta funcion se agregara junto con los renderizadores paralelos.\n";
         return 1;
     }
-    if (config.mode != RenderMode::Sequential) {
-        std::cerr << "Por ahora use --mode sequential.\n";
+    if (config.mode == RenderMode::Optimized) {
+        std::cerr << "El modo optimized aun no esta disponible.\n";
         return 1;
     }
     return config.headless ? runHeadless(config) : runScreensaverWindow(config);

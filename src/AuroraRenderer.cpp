@@ -97,10 +97,34 @@ AuroraRenderer::AuroraRenderer(int width, int height)
       height_(height),
       pixels_(static_cast<std::size_t>(width) * static_cast<std::size_t>(height)) {}
 
+void AuroraRenderer::render(const AuroraSimulation& simulation, RenderMode mode) {
+    if (mode == RenderMode::Sequential) {
+        renderSequential(simulation);
+    } else {
+        renderParallel(simulation);
+    }
+}
+
 void AuroraRenderer::renderSequential(const AuroraSimulation& simulation) {
     const auto& sources = simulation.sources();
     const float time = simulation.elapsedSeconds();
 
+    for (int y = 0; y < height_; ++y) {
+        for (int x = 0; x < width_; ++x) {
+            const std::size_t pixelIndex = static_cast<std::size_t>(y) *
+                                               static_cast<std::size_t>(width_) +
+                                           static_cast<std::size_t>(x);
+            pixels_[pixelIndex] = calculatePixel(x, y, width_, height_, time, sources);
+        }
+    }
+}
+
+void AuroraRenderer::renderParallel(const AuroraSimulation& simulation) {
+    const auto& sources = simulation.sources();
+    const float time = simulation.elapsedSeconds();
+
+    // Cada iteracion escribe filas distintas, por lo que no comparte posiciones del framebuffer.
+#pragma omp parallel for schedule(static)
     for (int y = 0; y < height_; ++y) {
         for (int x = 0; x < width_; ++x) {
             const std::size_t pixelIndex = static_cast<std::size_t>(y) *
