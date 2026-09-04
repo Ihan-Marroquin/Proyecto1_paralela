@@ -1,6 +1,7 @@
 #include "AppConfig.h"
 #include "AuroraRenderer.h"
 #include "AuroraSimulation.h"
+#include "Benchmark.h"
 #include "ScreensaverWindow.h"
 
 #include <chrono>
@@ -66,9 +67,12 @@ int main(int argc, char* argv[]) {
     omp_set_dynamic(0);
     omp_set_num_threads(config.threadCount);
 
-    if (config.selfTest || config.benchmark) {
-        std::cerr << "Esta funcion se agregara junto con los renderizadores paralelos.\n";
+    if (config.selfTest) {
+        std::cerr << "Las pruebas internas aun no estan disponibles.\n";
         return 1;
+    }
+    if (config.benchmark) {
+        return runBenchmark(config);
     }
     if (config.mode == RenderMode::Optimized) {
         std::cerr << "El modo optimized aun no esta disponible.\n";

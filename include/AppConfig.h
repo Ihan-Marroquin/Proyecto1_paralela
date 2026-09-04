@@ -25,10 +25,10 @@ struct AppConfig {
     bool selfTest = false;
     bool showHelp = false;
     std::string outputPath;
+    std::string benchmarkPath = "results/benchmark.csv";
 };
 
 // Devuelve false y deja un mensaje legible cuando algun argumento no es valido.
 bool parseArguments(int argc, char* argv[], AppConfig& config, std::string& error);
 void printUsage(std::ostream& output, const char* programName);
 const char* renderModeName(RenderMode mode);
-

@@ -13,6 +13,7 @@ add_executable(aurora_saver
     src/AppConfig.cpp
     src/AuroraSimulation.cpp
     src/AuroraRenderer.cpp
+    src/Benchmark.cpp
     src/ScreensaverWindow.cpp
 )
 

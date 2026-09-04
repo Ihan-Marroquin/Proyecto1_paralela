@@ -159,6 +159,12 @@ bool parseArguments(int argc, char* argv[], AppConfig& config, std::string& erro
                 return false;
             }
             config.outputPath = std::string(value);
+        } else if (argument == "--csv") {
+            if (!requireValue(argc, argv, index, argument, value, error) || value.empty()) {
+                error = "La ruta del CSV no puede estar vacia.";
+                return false;
+            }
+            config.benchmarkPath = std::string(value);
         } else {
             error = "Opcion desconocida: " + std::string(argument);
             return false;
@@ -188,6 +194,7 @@ void printUsage(std::ostream& output, const char* programName) {
         << "  --output RUTA     guardar el ultimo cuadro como imagen PPM\n"
         << "  --benchmark       comparar los tres modos sin ventana\n"
         << "  --trials N        mediciones del benchmark (minimo 10)\n"
+        << "  --csv RUTA        archivo CSV para las mediciones\n"
         << "  --self-test       comprobar consistencia de los renderizadores\n"
         << "  --help, -h        mostrar esta ayuda\n";
 }
