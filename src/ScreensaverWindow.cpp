@@ -19,6 +19,11 @@ struct WindowState {
     bool running = true;
     bool paused = false;
     bool saveRequested = false;
+    bool fullscreenToggleRequested = false;
+    bool fullscreen = false;
+    RenderMode mode = RenderMode::Optimized;
+    DWORD windowedStyle = WS_OVERLAPPEDWINDOW;
+    WINDOWPLACEMENT windowedPlacement{};
 };
 
 LRESULT CALLBACK windowProcedure(HWND window, UINT message, WPARAM wordParameter,
@@ -45,6 +50,14 @@ LRESULT CALLBACK windowProcedure(HWND window, UINT message, WPARAM wordParameter
                 state->paused = !state->paused;
             } else if (wordParameter == 'S') {
                 state->saveRequested = true;
+            } else if (wordParameter == 'F') {
+                state->fullscreenToggleRequested = true;
+            } else if (wordParameter == '1') {
+                state->mode = RenderMode::Sequential;
+            } else if (wordParameter == '2') {
+                state->mode = RenderMode::Parallel;
+            } else if (wordParameter == '3') {
+                state->mode = RenderMode::Optimized;
             }
             return 0;
         case WM_CLOSE:
@@ -91,6 +104,33 @@ bool drawFramebuffer(HWND window, const AuroraRenderer& renderer) {
     return copiedLines != 0 && copiedLines != static_cast<int>(GDI_ERROR);
 }
 
+void toggleFullscreen(HWND window, WindowState& state) {
+    if (!state.fullscreen) {
+        state.windowedStyle = static_cast<DWORD>(GetWindowLongPtr(window, GWL_STYLE));
+        state.windowedPlacement.length = sizeof(WINDOWPLACEMENT);
+
+        MONITORINFO monitorInfo{};
+        monitorInfo.cbSize = sizeof(MONITORINFO);
+        if (GetWindowPlacement(window, &state.windowedPlacement) != 0 &&
+            GetMonitorInfo(MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST), &monitorInfo) != 0) {
+            SetWindowLongPtr(window, GWL_STYLE,
+                             static_cast<LONG_PTR>(state.windowedStyle & ~WS_OVERLAPPEDWINDOW));
+            SetWindowPos(window, HWND_TOP, monitorInfo.rcMonitor.left, monitorInfo.rcMonitor.top,
+                         monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left,
+                         monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top,
+                         SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+            state.fullscreen = true;
+        }
+    } else {
+        SetWindowLongPtr(window, GWL_STYLE, static_cast<LONG_PTR>(state.windowedStyle));
+        SetWindowPlacement(window, &state.windowedPlacement);
+        SetWindowPos(window, nullptr, 0, 0, 0, 0,
+                     SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER |
+                         SWP_FRAMECHANGED);
+        state.fullscreen = false;
+    }
+}
+
 } // namespace
 
 int runScreensaverWindow(const AppConfig& config) {
@@ -116,6 +156,7 @@ int runScreensaverWindow(const AppConfig& config) {
     }
 
     WindowState state;
+    state.mode = config.mode;
     HWND window = CreateWindowEx(
         0, className, "Aurora Paralela", windowStyle, CW_USEDEFAULT, CW_USEDEFAULT,
         windowArea.right - windowArea.left, windowArea.bottom - windowArea.top, nullptr, nullptr,
@@ -148,6 +189,10 @@ int runScreensaverWindow(const AppConfig& config) {
         if (!state.running) {
             break;
         }
+        if (state.fullscreenToggleRequested) {
+            toggleFullscreen(window, state);
+            state.fullscreenToggleRequested = false;
+        }
         if (state.paused) {
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             previousFrame = std::chrono::steady_clock::now();
@@ -160,7 +205,7 @@ int runScreensaverWindow(const AppConfig& config) {
         simulation.update(deltaSeconds);
 
         const auto renderStart = std::chrono::steady_clock::now();
-        renderer.render(simulation, config.mode);
+        renderer.render(simulation, state.mode);
         const auto renderEnd = std::chrono::steady_clock::now();
         lastRenderMilliseconds =
             std::chrono::duration<double, std::milli>(renderEnd - renderStart).count();
@@ -188,7 +233,7 @@ int runScreensaverWindow(const AppConfig& config) {
             const double framesPerSecond = static_cast<double>(framesSinceTitleUpdate) / titleSeconds;
             std::ostringstream title;
             title.precision(1);
-            title << std::fixed << "Aurora Paralela | " << renderModeName(config.mode)
+            title << std::fixed << "Aurora Paralela | " << renderModeName(state.mode)
                   << " | FPS " << framesPerSecond
                   << " | render " << lastRenderMilliseconds << " ms | N=" << config.sourceCount;
             SetWindowText(window, title.str().c_str());
