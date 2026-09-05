@@ -71,6 +71,7 @@ int runBenchmark(const AppConfig& config) {
     std::vector<ModeMeasurements> measurements = {
         {RenderMode::Sequential, {}},
         {RenderMode::Parallel, {}},
+        {RenderMode::Optimized, {}},
     };
     for (auto& mode : measurements) {
         mode.milliseconds.reserve(static_cast<std::size_t>(config.trials));
@@ -154,4 +155,3 @@ int runBenchmark(const AppConfig& config) {
     std::cout << "\nResultados guardados en: " << config.benchmarkPath << '\n';
     return 0;
 }
-

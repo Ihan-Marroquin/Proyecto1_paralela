@@ -74,9 +74,5 @@ int main(int argc, char* argv[]) {
     if (config.benchmark) {
         return runBenchmark(config);
     }
-    if (config.mode == RenderMode::Optimized) {
-        std::cerr << "El modo optimized aun no esta disponible.\n";
-        return 1;
-    }
     return config.headless ? runHeadless(config) : runScreensaverWindow(config);
 }
