@@ -116,3 +116,15 @@ src/Benchmark.cpp         mediciones, speedup, eficiencia y CSV
 src/ScreensaverWindow.cpp ventana y controles interactivos
 scripts/                  compilación y ejecución de pruebas
 ```
+
+## Verificación
+
+Para compilar y ejecutar las pruebas internas junto con casos de argumentos inválidos:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/test.ps1
+```
+
+La prueba principal compara cada píxel y el checksum de las tres versiones, comprueba
+que las fuentes se mantengan dentro del canvas y verifica que una semilla produzca el
+mismo resultado en ejecuciones distintas.

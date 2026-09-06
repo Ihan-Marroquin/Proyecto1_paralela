@@ -30,6 +30,7 @@ $sourceFiles = @(
     "src/AuroraSimulation.cpp",
     "src/AuroraRenderer.cpp",
     "src/Benchmark.cpp",
+    "src/SelfTest.cpp",
     "src/ScreensaverWindow.cpp"
 ) | ForEach-Object { Join-Path $projectRoot $_ }
 
@@ -59,4 +60,3 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host "Compilacion completada: $outputFile"
-

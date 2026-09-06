@@ -2,6 +2,7 @@
 #include "AuroraRenderer.h"
 #include "AuroraSimulation.h"
 #include "Benchmark.h"
+#include "SelfTest.h"
 #include "ScreensaverWindow.h"
 
 #include <chrono>
@@ -68,8 +69,7 @@ int main(int argc, char* argv[]) {
     omp_set_num_threads(config.threadCount);
 
     if (config.selfTest) {
-        std::cerr << "Las pruebas internas aun no estan disponibles.\n";
-        return 1;
+        return runSelfTests(config);
     }
     if (config.benchmark) {
         return runBenchmark(config);
