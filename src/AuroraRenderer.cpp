@@ -21,6 +21,12 @@ std::uint32_t packColor(float red, float green, float blue) {
            static_cast<std::uint32_t>(toByte(blue));
 }
 
+float toneMap(float value) {
+    const float positive = std::max(0.0F, value);
+    const float mapped = positive / (1.0F + positive);
+    return std::pow(mapped, 0.78F);
+}
+
 std::uint32_t coordinateHash(int x, int y) {
     std::uint32_t value = static_cast<std::uint32_t>(x) * 0x45d9f3bU;
     value ^= static_cast<std::uint32_t>(y) * 0x27d4eb2dU;
@@ -45,7 +51,7 @@ std::uint32_t calculatePixel(int x, int y, int width, int height, float time,
         const float radiusSquared = source.radius * source.radius;
         const float distance = std::sqrt(distanceSquared + 1.0F);
         const float falloff = radiusSquared / (distanceSquared + radiusSquared);
-        const float ring = 0.72F + 0.28F *
+        const float ring = 0.58F + 0.42F *
                                       std::cos(distance * 0.052F - source.phase * 2.4F -
                                                time * 1.35F);
         const float influence = falloff * ring;
@@ -55,7 +61,7 @@ std::uint32_t calculatePixel(int x, int y, int width, int height, float time,
         accumulatedBlue += influence * source.color.blue;
     }
 
-    const float sourceScale = 2.15F / std::sqrt(static_cast<float>(sources.size()) + 1.0F);
+    const float sourceScale = 1.40F / std::sqrt(static_cast<float>(sources.size()) + 1.0F);
     accumulatedRed *= sourceScale;
     accumulatedGreen *= sourceScale;
     accumulatedBlue *= sourceScale;
@@ -70,9 +76,9 @@ std::uint32_t calculatePixel(int x, int y, int width, int height, float time,
                                              std::sin(pixelX / static_cast<float>(width) * 6.2831853F -
                                                       time * 0.18F);
 
-    float red = 0.008F + accumulatedRed * 0.72F + curtain * 0.025F;
-    float green = 0.012F + accumulatedGreen * 0.78F + curtain * (0.17F + horizontalFade * 0.08F);
-    float blue = 0.035F + accumulatedBlue * 0.88F + curtain * 0.22F;
+    float red = 0.002F + accumulatedRed * 0.90F + curtain * 0.012F;
+    float green = 0.004F + accumulatedGreen * 0.95F + curtain * (0.11F + horizontalFade * 0.06F);
+    float blue = 0.018F + accumulatedBlue * 1.05F + curtain * 0.14F;
 
     // Un hash de coordenadas agrega estrellas estables sin estado ni sincronizacion.
     const std::uint32_t hash = coordinateHash(x, y);
@@ -83,10 +89,10 @@ std::uint32_t calculatePixel(int x, int y, int width, int height, float time,
         blue += star;
     }
 
-    // Mapeo tonal y gamma sencilla para conservar detalle cuando se superponen fuentes.
-    red = std::sqrt(red / (1.0F + red));
-    green = std::sqrt(green / (1.0F + green));
-    blue = std::sqrt(blue / (1.0F + blue));
+    // Mapeo tonal para conservar colores intensos sin aclarar por completo el fondo.
+    red = toneMap(red);
+    green = toneMap(green);
+    blue = toneMap(blue);
     return packColor(red, green, blue);
 }
 
@@ -162,7 +168,7 @@ void AuroraRenderer::renderOptimized(const AuroraSimulation& simulation) {
         cache_.blue[sourceIndex] = source.color.blue;
     }
 
-    const float sourceScale = 2.15F / std::sqrt(static_cast<float>(sourceCount) + 1.0F);
+    const float sourceScale = 1.40F / std::sqrt(static_cast<float>(sourceCount) + 1.0F);
 
     // Una sola region paralela evita crear y destruir el equipo de hilos en cada etapa.
 #pragma omp parallel
@@ -214,7 +220,7 @@ void AuroraRenderer::renderOptimized(const AuroraSimulation& simulation) {
                     const float distance = std::sqrt(distanceSquared + 1.0F);
                     const float falloff = cache_.radiusSquared[sourceIndex] /
                                           (distanceSquared + cache_.radiusSquared[sourceIndex]);
-                    const float ring = 0.72F + 0.28F *
+                    const float ring = 0.58F + 0.42F *
                         std::cos(distance * 0.052F - cache_.phase[sourceIndex] * 2.4F -
                                  time * 1.35F);
                     const float influence = falloff * ring;
@@ -231,10 +237,10 @@ void AuroraRenderer::renderOptimized(const AuroraSimulation& simulation) {
                     static_cast<float>(y) - cache_.waveY[static_cast<std::size_t>(x)]);
                 const float curtain = 1.0F / (1.0F + distanceToWave * 0.034F);
                 const float horizontalFade = cache_.horizontalFade[static_cast<std::size_t>(x)];
-                float red = 0.008F + accumulatedRed * 0.72F + curtain * 0.025F;
-                float green = 0.012F + accumulatedGreen * 0.78F +
-                              curtain * (0.17F + horizontalFade * 0.08F);
-                float blue = 0.035F + accumulatedBlue * 0.88F + curtain * 0.22F;
+                float red = 0.002F + accumulatedRed * 0.90F + curtain * 0.012F;
+                float green = 0.004F + accumulatedGreen * 0.95F +
+                              curtain * (0.11F + horizontalFade * 0.06F);
+                float blue = 0.018F + accumulatedBlue * 1.05F + curtain * 0.14F;
 
                 const std::uint32_t hash = coordinateHash(x, y);
                 if ((hash & 0x7ffU) == 0U) {
@@ -245,9 +251,9 @@ void AuroraRenderer::renderOptimized(const AuroraSimulation& simulation) {
                     blue += star;
                 }
 
-                red = std::sqrt(red / (1.0F + red));
-                green = std::sqrt(green / (1.0F + green));
-                blue = std::sqrt(blue / (1.0F + blue));
+                red = toneMap(red);
+                green = toneMap(green);
+                blue = toneMap(blue);
                 const std::size_t pixelIndex = static_cast<std::size_t>(y) *
                                                    static_cast<std::size_t>(width_) +
                                                static_cast<std::size_t>(x);
